@@ -1,0 +1,14 @@
+fastapi>=0.68.0
+uvicorn>=0.15.0
+sqlalchemy>=1.4.23
+psycopg2-binary>=2.9.1
+pydantic>=1.8.2
+pydantic-settings>=2.0.0
+aiohttp>=3.8.1
+beautifulsoup4>=4.9.3
+selenium==4.16.0
+webdriver_manager==4.0.1
+undetected-chromedriver==3.5.4
+setuptools>=65.5.1
+websockets>=10.0
+python-dotenv>=1.0.0
