@@ -137,9 +137,6 @@ class LieferandoScraper:
                 
             except Exception as e:
                 logging.error(f"Error finding main restaurant list: {str(e)}")
-                # Save page source for debugging
-                with open('debug_page.html', 'w', encoding='utf-8') as f:
-                    f.write(driver.page_source)
                 return None
             
         except Exception as e:
