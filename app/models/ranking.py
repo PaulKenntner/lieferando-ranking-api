@@ -12,7 +12,7 @@ class Ranking(Base):
     id = Column(Integer, primary_key=True)
     restaurant_slug = Column(String, nullable=False)
     rank = Column(Integer, nullable=False)
-    rating = Column(Float)
+    rating = Column(String, nullable=False)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
 
 async def init_db():

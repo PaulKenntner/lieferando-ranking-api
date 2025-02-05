@@ -52,29 +52,84 @@ class LieferandoScraper:
             logging.error(f"Error creating driver: {str(e)}")
             raise
 
-    async def get_ranking(self, restaurant_id: str) -> Optional[Dict]:
-        """Get current ranking for a restaurant"""
+    def _get_restaurant_location(self, driver, restaurant_id: str) -> Optional[tuple]:
+        """Get restaurant's location (postal code and city) from its menu page"""
         try:
-            city = self._extract_city(restaurant_id)
-            if not city:
-                logging.warning(f"Could not extract city from restaurant ID: {restaurant_id}")
+            restaurant_url = f"{self.base_url}/speisekarte/{restaurant_id}"
+            logging.info(f"Getting restaurant location from: {restaurant_url}")
+            
+            driver.get(restaurant_url)
+            time.sleep(5)  # Wait for initial load
+            
+            try:
+                # Find the "Über uns" button using text content
+                button = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.XPATH, "//button[@data-qa='button']//div[@data-qa='text'][contains(text(), 'Über uns')]"))
+                )
+                button.click()
+                time.sleep(3)  # Wait for address to load
+                logging.info("Clicked button to show address")
+                
+                # Get postal code and city
+                address_element = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "[data-qa='restaurant-info-modal-info-address-element']"))
+                )
+                address_text = address_element.text
+                logging.info(f"Found address: {address_text}")
+                
+                # Extract postal code and city
+                parts = address_text.split('\n')
+                location_line = [p for p in parts if any(c.isdigit() for c in p)][-1]
+                # Split into postal code and city
+                postal_code = ''.join(filter(str.isdigit, location_line))
+                city = location_line.split()[-1]
+                
+                logging.info(f"Extracted location: {postal_code} {city}")
+                return (postal_code, city)
+                
+            except Exception as e:
+                logging.error(f"Error getting restaurant location: {str(e)}")
                 return None
                 
-            logging.info(f"Searching in city: {city}")
+        except Exception as e:
+            logging.error(f"Error accessing restaurant page: {str(e)}")
+            return None
+
+    async def get_ranking(self, restaurant_id: str) -> Optional[Dict]:
+        """Get current ranking for a restaurant"""
+        driver = None
+        try:
+            driver = self._create_driver()
             
-            result = await self._get_search_results(city, restaurant_id)  # Pass restaurant_id
+            # First get the restaurant's location
+            location = self._get_restaurant_location(driver, restaurant_id)
+            if not location:
+                logging.warning(f"Could not get location for restaurant: {restaurant_id}")
+                return None
+                
+            postal_code, city = location
+            logging.info(f"Searching in {postal_code} {city}")
+            
+            # Now search in that location
+            result = await self._get_search_results(postal_code, city, restaurant_id, driver)
             return result
 
         except Exception as e:
             logging.error(f"Error in get_ranking: {str(e)}")
             return None
+            
+        finally:
+            if driver:
+                try:
+                    driver.quit()
+                except:
+                    pass
 
-    async def _get_search_results(self, city: str, target_restaurant_id: str) -> Optional[Dict]:
+    async def _get_search_results(self, postal_code: str, city: str, target_restaurant_id: str, driver) -> Optional[Dict]:
         """Get search results using Selenium"""
-        driver = None
         try:
-            driver = self._create_driver()
-            url = f"{self.base_url}/lieferservice/essen/{city}"
+            # Use both postal code and city in the URL
+            url = f"{self.base_url}/lieferservice/essen/{postal_code}-{city.lower()}"
             logging.info(f"Searching: {url}")
             
             driver.get(url)
@@ -141,11 +196,4 @@ class LieferandoScraper:
             
         except Exception as e:
             logging.error(f"Error in get_search_results: {str(e)}")
-            return None
-            
-        finally:
-            if driver:
-                try:
-                    driver.quit()
-                except:
-                    pass 
+            return None 

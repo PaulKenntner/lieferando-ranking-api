@@ -11,7 +11,8 @@ class RankingScheduler:
         self.restaurant_slugs = [
             "loco-chicken-i-frechen",
             "loco-chicken-bielefeld",
-            "happy-slice-suedstadt",
+            #"happy-slice-suedstadt",
+            "happy-slice-pizza-i-wandsbek-markt",
         ]
         self.interval_minutes = 60
         self.is_running = False
