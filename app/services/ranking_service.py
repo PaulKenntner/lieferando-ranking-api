@@ -1,6 +1,6 @@
 from app.utils.scraper import LieferandoScraper
 from app.models.ranking import Ranking
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from app.config import settings
 from typing import List, Optional, Dict
@@ -17,20 +17,26 @@ class RankingService:
         """Get current ranking for a restaurant"""
         try:
             ranking_data = await self.scraper.get_ranking(restaurant_slug)
-            logging.info(f"Ranking data: {ranking_data}")
-            return ranking_data
+            if ranking_data:
+                logging.info(f"Got ranking for {restaurant_slug}: {ranking_data}")
+                # Store the ranking immediately when we get it
+                await self.store_ranking(restaurant_slug, ranking_data)
+                return ranking_data
+            else:
+                logging.warning(f"No ranking data found for {restaurant_slug}")
+                return None
         except Exception as e:
             logging.error(f"Error getting ranking: {str(e)}")
             return None
 
-    async def get_ranking_history(self, restaurant_slug: str) -> List[dict]:
+    async def get_ranking_history(self, restaurant_slug: str, limit: int = 100) -> List[dict]:
         """Get ranking history for a restaurant"""
         session = self.SessionLocal()
         try:
             rankings = session.query(Ranking)\
                 .filter(Ranking.restaurant_slug == restaurant_slug)\
                 .order_by(Ranking.timestamp.desc())\
-                .limit(100)\
+                .limit(limit)\
                 .all()
             
             return [{
@@ -53,6 +59,7 @@ class RankingService:
             )
             session.add(ranking)
             session.commit()
+            logging.info(f"Stored ranking for {restaurant_slug}: rank={ranking_data['rank']}, rating={ranking_data.get('rating')}")
         except Exception as e:
             session.rollback()
             logging.error(f"Error storing ranking: {str(e)}")

@@ -13,6 +13,7 @@ class RankingScheduler:
             "loco-chicken-bielefeld",
             #"happy-slice-suedstadt",
             "happy-slice-pizza-i-wandsbek-markt",
+            # Add more restaurants as needed
         ]
         self.interval_minutes = 60
         self.is_running = False
@@ -47,8 +48,7 @@ class RankingScheduler:
                 ranking_data = await self.ranking_service.get_current_ranking(slug)
                 
                 if ranking_data:
-                    await self.ranking_service.store_ranking(slug, ranking_data)
-                    logging.info(f"Successfully stored ranking for {slug}: {ranking_data}")
+                    logging.info(f"Successfully updated ranking for {slug}: {ranking_data}")
                 else:
                     logging.warning(f"No ranking data found for {slug}")
                 
