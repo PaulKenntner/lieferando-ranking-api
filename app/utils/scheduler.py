@@ -48,7 +48,7 @@ class RankingScheduler:
                 ranking_data = await self.ranking_service.get_current_ranking(slug)
                 
                 if ranking_data:
-                    logging.info(f"Successfully updated ranking for {slug}: {ranking_data}")
+                    logging.info(f"Successfully updated ranking for {slug}")
                 else:
                     logging.warning(f"No ranking data found for {slug}")
                 
