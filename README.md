@@ -20,7 +20,7 @@ That's it! Everything else is handled by the Docker containers.
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/your-repo/lieferando-ranking-api.git
+git clone https://github.com/PaulKenntner/LANCH_Case_study.git
 cd lieferando-ranking-api
 ```
 
